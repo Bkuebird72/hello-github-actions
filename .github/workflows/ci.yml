@@ -1,0 +1,27 @@
+name: Todo App CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["master", "main"]
+
+jobs:
+  test:
+    name: Kjør tester
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Sjekk ut koden
+        uses: actions/checkout@v4
+
+      - name: Sett opp Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer avhengigheter
+        run: pip install pytest
+
+      - name: Kjør tester
+        run: pytest tests/ -v
