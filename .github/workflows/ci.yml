@@ -21,7 +21,7 @@ jobs:
           python-version: "3.12"
 
       - name: Installer avhengigheter
-        run: pip install pytest
+        run: pip install -r requirements.txt
 
       - name: Kjør tester
         run: pytest tests/ -v
