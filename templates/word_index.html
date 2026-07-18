@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mine dokumenter</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f3f2f1; min-height: 100vh; }
+
+    /* Header */
+    .header {
+      background: #2b579a;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo {
+      color: white;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -.5px;
+      flex: 1;
+    }
+    .logo em { color: #a0bce8; font-style: normal; }
+
+    /* Content */
+    .content { max-width: 1000px; margin: 0 auto; padding: 28px 16px 60px; }
+    .section-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: #555;
+      margin-bottom: 14px;
+    }
+
+    /* New document tile */
+    .new-tile {
+      width: 100%;
+      background: none;
+      border: 2px dashed #bcd0f0;
+      border-radius: 6px;
+      padding: 0;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #2b579a;
+      height: 180px;
+      transition: background .15s, border-color .15s;
+    }
+    .new-tile:hover { background: #e8f0fb; border-color: #2b579a; }
+    .new-tile .icon { font-size: 2.2rem; }
+    .new-tile span { font-size: 0.88rem; font-weight: 600; }
+
+    /* Document grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    /* Document card */
+    .doc-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+      transition: box-shadow .15s;
+    }
+    .doc-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.13); }
+
+    .card-link { text-decoration: none; color: inherit; display: block; }
+
+    .card-preview {
+      height: 130px;
+      background: #fafafa;
+      border-bottom: 1px solid #f0f0f0;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .preview-line {
+      height: 7px;
+      background: #ddd;
+      border-radius: 3px;
+    }
+    .preview-line:first-child { height: 10px; background: #bbb; width: 75%; }
+    .preview-line:nth-child(2) { width: 95%; }
+    .preview-line:nth-child(3) { width: 88%; }
+    .preview-line:nth-child(4) { width: 70%; }
+    .preview-line:nth-child(5) { width: 83%; }
+
+    .card-info { padding: 10px 12px 10px; }
+    .card-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #111;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+    .card-meta {
+      font-size: 0.72rem;
+      color: #888;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .del-btn {
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1px solid #ddd;
+      background: rgba(255,255,255,.92);
+      color: #999;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity .12s;
+    }
+    .doc-card:hover .del-btn { opacity: 1; }
+    .del-btn:hover { background: #fee; color: #c00; border-color: #c00; }
+
+    /* Empty state */
+    .empty { text-align: center; padding: 60px 20px; color: #999; }
+    .empty .icon { font-size: 3rem; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">W<em>ord</em></div>
+</header>
+
+<div class="content">
+
+  <!-- New document -->
+  <p class="section-label">Nytt</p>
+  <div class="grid" style="margin-bottom: 32px">
+    <form action="/new" method="post" style="display:contents">
+      <button type="submit" class="new-tile">
+        <div class="icon">📄</div>
+        <span>Tomt dokument</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Recent documents -->
+  {% if docs %}
+  <p class="section-label">Siste</p>
+  <div class="grid">
+    {% for doc in docs %}
+    <div class="doc-card">
+      <a href="/edit/{{ doc.id }}" class="card-link">
+        <div class="card-preview">
+          <div class="preview-line"></div>
+          <div class="preview-line"></div>
+          <div class="preview-line"></div>
+          <div class="preview-line"></div>
+          <div class="preview-line"></div>
+        </div>
+        <div class="card-info">
+          <div class="card-title">{{ doc.title }}</div>
+          <div class="card-meta">
+            <span>{{ doc.modified }}</span>
+            <span>{{ doc.words }} ord</span>
+          </div>
+        </div>
+      </a>
+      <form action="/delete/{{ doc.id }}" method="post"
+            onsubmit="return confirm('Slett «{{ doc.title }}»?')">
+        <button class="del-btn" type="submit" title="Slett">✕</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">
+    <div class="icon">📝</div>
+    <p>Ingen dokumenter ennå.<br>Trykk «Tomt dokument» for å starte.</p>
+  </div>
+  {% endif %}
+
+</div>
+</body>
+</html>

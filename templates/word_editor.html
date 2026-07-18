@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title id="page-title">{{ doc.title }}</title>
+  <link href="/static/quill.snow.css" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f3f2f1;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ===== TOP BAR ===== */
+    .topbar {
+      background: #2b579a;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      gap: 6px;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+    .back-btn {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,.85);
+      font-size: 1.5rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .back-btn:hover { background: rgba(255,255,255,.15); color: white; }
+
+    .title-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid transparent;
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 4px 2px;
+      outline: none;
+      min-width: 0;
+      font-family: inherit;
+    }
+    .title-input:focus { border-bottom-color: rgba(255,255,255,.5); }
+    .title-input::placeholder { color: rgba(255,255,255,.5); }
+
+    .save-badge {
+      color: rgba(255,255,255,.75);
+      font-size: 0.76rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .top-btn {
+      background: rgba(255,255,255,.15);
+      border: none;
+      color: white;
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-family: inherit;
+    }
+    .top-btn:hover { background: rgba(255,255,255,.28); }
+
+    /* ===== TOOLBAR ===== */
+    .toolbar-wrap {
+      background: white;
+      border-bottom: 1px solid #d0d0d0;
+      flex-shrink: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .toolbar-wrap::-webkit-scrollbar { display: none; }
+
+    #toolbar.ql-toolbar.ql-snow {
+      border: none !important;
+      padding: 5px 8px !important;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    #toolbar .ql-formats {
+      display: inline-flex;
+      align-items: center;
+      margin-right: 6px !important;
+    }
+
+    /* ===== CANVAS & PAGE ===== */
+    .canvas {
+      flex: 1;
+      overflow-y: auto;
+      background: #f3f2f1;
+      padding: 24px 12px 48px;
+    }
+    .page {
+      max-width: 794px;
+      margin: 0 auto;
+      background: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,.18);
+    }
+
+    /* Quill overrides */
+    .ql-container.ql-snow {
+      border: none !important;
+      font-family: Calibri, 'Segoe UI', Georgia, sans-serif !important;
+      font-size: 11pt !important;
+    }
+    .ql-editor {
+      padding: 2.5cm 3cm !important;
+      min-height: 1050px;
+      line-height: 1.5 !important;
+    }
+    .ql-editor.ql-blank::before {
+      font-style: normal !important;
+      color: #bbb !important;
+      left: 3cm !important;
+    }
+    .ql-editor p { margin-bottom: 0.35em; }
+    .ql-editor h1 { font-size: 2em; margin-bottom: .4em; }
+    .ql-editor h2 { font-size: 1.5em; margin-bottom: .35em; }
+    .ql-editor h3 { font-size: 1.17em; margin-bottom: .3em; }
+    .ql-editor blockquote {
+      border-left: 4px solid #2b579a;
+      padding-left: 1em;
+      color: #555;
+      font-style: italic;
+    }
+
+    /* ===== STATUS BAR ===== */
+    .statusbar {
+      background: #1e3f72;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 24px;
+      flex-shrink: 0;
+      color: rgba(255,255,255,.75);
+      font-size: 0.72rem;
+    }
+    .statusbar .right { margin-left: auto; }
+
+    /* ===== PRINT ===== */
+    @media print {
+      .topbar, .toolbar-wrap, .statusbar { display: none !important; }
+      body { height: auto !important; overflow: visible !important; background: white !important; }
+      .canvas { flex: none; overflow: visible !important; padding: 0 !important; background: none !important; }
+      .page { box-shadow: none !important; max-width: 100% !important; }
+      .ql-editor { padding: 0 !important; min-height: auto !important; }
+    }
+
+    /* ===== MOBILE ===== */
+    @media (max-width: 600px) {
+      .ql-editor { padding: 20px 16px !important; min-height: 600px; }
+      .ql-editor.ql-blank::before { left: 16px !important; }
+      .canvas { padding: 0; }
+      .page { box-shadow: none; }
+      .save-badge { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <a href="/" class="back-btn" title="Mine dokumenter">‹</a>
+  <input class="title-input" id="docTitle" type="text"
+         value="{{ doc.title }}" placeholder="Dokumenttittel..."/>
+  <span class="save-badge" id="saveBadge">Lagret ✓</span>
+  <button class="top-btn" onclick="exportDoc()">↓ Eksporter</button>
+  <button class="top-btn" onclick="window.print()">⎙ Skriv ut</button>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar-wrap">
+  <div id="toolbar">
+    <span class="ql-formats">
+      <select class="ql-size">
+        <option value="10px">10</option>
+        <option value="12px">12</option>
+        <option value="14px" selected>14</option>
+        <option value="16px">16</option>
+        <option value="18px">18</option>
+        <option value="24px">24</option>
+        <option value="36px">36</option>
+        <option value="48px">48</option>
+      </select>
+    </span>
+    <span class="ql-formats">
+      <button class="ql-bold"></button>
+      <button class="ql-italic"></button>
+      <button class="ql-underline"></button>
+      <button class="ql-strike"></button>
+    </span>
+    <span class="ql-formats">
+      <select class="ql-color"></select>
+      <select class="ql-background"></select>
+    </span>
+    <span class="ql-formats">
+      <button class="ql-script" value="sub"></button>
+      <button class="ql-script" value="super"></button>
+    </span>
+    <span class="ql-formats">
+      <select class="ql-header">
+        <option value="1">Overskrift 1</option>
+        <option value="2">Overskrift 2</option>
+        <option value="3">Overskrift 3</option>
+        <option selected>Normal</option>
+      </select>
+    </span>
+    <span class="ql-formats">
+      <button class="ql-list" value="ordered"></button>
+      <button class="ql-list" value="bullet"></button>
+      <button class="ql-indent" value="-1"></button>
+      <button class="ql-indent" value="+1"></button>
+    </span>
+    <span class="ql-formats">
+      <select class="ql-align"></select>
+    </span>
+    <span class="ql-formats">
+      <button class="ql-blockquote"></button>
+      <button class="ql-code-block"></button>
+      <button class="ql-link"></button>
+    </span>
+    <span class="ql-formats">
+      <button class="ql-clean"></button>
+    </span>
+  </div>
+</div>
+
+<!-- EDITOR CANVAS -->
+<div class="canvas">
+  <div class="page">
+    <div id="editor"></div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <span id="wordCount">Ord: {{ doc.words }}</span>
+  <span id="charCount">Tegn: 0</span>
+  <span class="right" id="modDate">{{ doc.modified }}</span>
+</div>
+
+<script src="/static/quill.min.js"></script>
+<script>
+(function () {
+  // Register custom font sizes (inline style approach)
+  const Size = Quill.import('attributors/style/size');
+  Size.whitelist = ['10px','12px','14px','16px','18px','24px','36px','48px'];
+  Quill.register(Size, true);
+
+  const quill = new Quill('#editor', {
+    theme: 'snow',
+    placeholder: 'Begynn å skrive her...',
+    modules: {
+      toolbar: '#toolbar',
+      history: { delay: 400, maxStack: 500, userOnly: true }
+    }
+  });
+
+  // Load saved content
+  const saved = {{ doc.content | tojson }};
+  if (saved) {
+    quill.root.innerHTML = saved;
+  }
+  quill.history.clear();
+
+  // ---- Word/char count ----
+  function countWords(text) {
+    const t = text.replace(/\n$/, '').trim();
+    return t ? t.split(/\s+/).length : 0;
+  }
+  function updateCounts() {
+    const text = quill.getText();
+    const chars = text.replace(/\n$/, '').length;
+    document.getElementById('wordCount').textContent = 'Ord: ' + countWords(text);
+    document.getElementById('charCount').textContent = 'Tegn: ' + chars;
+  }
+
+  // ---- Auto-save ----
+  let dirty = false;
+  let timer = null;
+
+  async function save() {
+    const title = document.getElementById('docTitle').value.trim() || 'Nytt dokument';
+    const content = quill.root.innerHTML;
+    const words = countWords(quill.getText());
+    document.getElementById('saveBadge').textContent = 'Lagrer…';
+    try {
+      const res = await fetch('/save/{{ doc.id }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content, words })
+      });
+      const data = await res.json();
+      document.getElementById('saveBadge').textContent = 'Lagret ✓';
+      document.getElementById('modDate').textContent = data.modified;
+      document.getElementById('page-title').textContent = title;
+    } catch {
+      document.getElementById('saveBadge').textContent = 'Feil ✕';
+    }
+    dirty = false;
+  }
+
+  function scheduleSave() {
+    dirty = true;
+    document.getElementById('saveBadge').textContent = 'Ikke lagret…';
+    clearTimeout(timer);
+    timer = setTimeout(save, 2000);
+  }
+
+  quill.on('text-change', () => { updateCounts(); scheduleSave(); });
+  document.getElementById('docTitle').addEventListener('input', scheduleSave);
+
+  // Save on keyboard shortcut Ctrl+S / Cmd+S
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      clearTimeout(timer);
+      save();
+    }
+  });
+
+  window.addEventListener('beforeunload', () => { if (dirty) save(); });
+
+  window.exportDoc = () => { window.location.href = '/export/{{ doc.id }}'; };
+
+  updateCounts();
+})();
+</script>
+</body>
+</html>
